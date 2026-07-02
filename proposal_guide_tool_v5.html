@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>提案ガイド診断｜担当サイトに、いま何が提案できるか</title>
+<style>
+  :root{
+    --paper:#FCFCF9;
+    --ink:#15181B;
+    --ink-soft:#3A3F42;
+    --muted:#6E7370;
+    --line:#E2E3DC;
+    --lime:#B2FF00;
+    --cream:#F4FBE4;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  @media (prefers-reduced-motion: reduce){ *{transition:none!important;animation:none!important;} }
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:"Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic Medium",Meiryo,sans-serif;
+    font-size:15px;line-height:1.7;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:760px;margin:0 auto;padding:0 24px;}
+  .screen{display:none;}
+  .screen.active{display:block;}
+
+  /* ============ 表紙 ============ */
+  #scr-cover{
+    background:var(--ink);color:var(--cream);
+    min-height:100vh;display:none;
+  }
+  #scr-cover.active{display:flex;align-items:center;}
+  #scr-cover .wrap{padding:64px 24px;}
+  .eyebrow{
+    display:inline-block;font-size:12px;letter-spacing:.18em;
+    color:var(--lime);border-bottom:1px solid var(--lime);
+    padding-bottom:4px;margin-bottom:22px;
+  }
+  #scr-cover h1{font-size:36px;font-weight:700;line-height:1.35;letter-spacing:.02em;margin-bottom:16px;}
+  #scr-cover p.lead{opacity:.85;font-size:14px;max-width:600px;}
+  .rules{
+    margin-top:32px;border-top:1px solid rgba(244,251,228,.25);
+    padding-top:22px;display:grid;grid-template-columns:repeat(3,1fr);gap:20px;
+  }
+  .rules div{font-size:12.5px;line-height:1.65;opacity:.9;}
+  .rules b{display:block;color:var(--lime);font-size:11.5px;letter-spacing:.08em;margin-bottom:6px;}
+  .start-btn{
+    margin-top:40px;
+    font-family:inherit;font-size:16px;font-weight:700;letter-spacing:.06em;
+    background:var(--lime);color:var(--ink);
+    border:none;padding:16px 42px;cursor:pointer;
+  }
+  .start-btn:hover{background:var(--cream);}
+  .start-btn:focus-visible{outline:2px solid var(--cream);outline-offset:3px;}
+  @media(max-width:640px){ .rules{grid-template-columns:1fr;} #scr-cover h1{font-size:27px;} }
+
+  /* ============ 質問画面 ============ */
+  #scr-quiz{min-height:100vh;}
+  .progress-rail{height:4px;background:var(--line);}
+  .progress-fill{height:4px;background:var(--lime);width:0%;transition:width .2s;}
+  .quiz-top{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:18px 0 0;font-size:12px;color:var(--muted);letter-spacing:.06em;
+  }
+  .zone-chip{
+    display:inline-block;font-size:12px;font-weight:700;letter-spacing:.08em;
+    border:1.5px solid var(--ink);padding:2px 12px;margin-top:26px;
+  }
+  .zone-note{font-size:13px;color:var(--ink-soft);margin-top:10px;}
+  .q-text{font-size:23px;font-weight:700;line-height:1.55;margin-top:20px;}
+  .q-hint{
+    font-size:16.5px;color:var(--ink);
+    margin-top:14px;line-height:1.75;
+    white-space:pre-line;
+  }
+  .answers{margin-top:30px;display:grid;gap:10px;max-width:480px;}
+  .answers button{
+    font-family:inherit;font-size:15px;font-weight:700;letter-spacing:.04em;
+    text-align:left;
+    background:#fff;color:var(--ink);
+    border:1.5px solid var(--ink);
+    padding:12px 22px;cursor:pointer;
+    transition:background .12s,color .12s;
+  }
+  .answers button.lean{font-weight:400;}
+  .answers button:hover{background:var(--ink);color:var(--cream);}
+  .answers button:focus-visible{outline:2px solid var(--lime);outline-offset:2px;}
+  .answers button span{display:block;font-size:11.5px;font-weight:400;color:var(--muted);margin-top:2px;letter-spacing:0;}
+  .answers button:hover span{color:var(--cream);opacity:.75;}
+  .answers .divider{border-top:1px dashed var(--line);margin:4px 0;}
+  .quiz-foot{
+    margin-top:44px;padding:16px 0 48px;border-top:1px solid var(--line);
+    display:flex;gap:22px;font-size:12.5px;
+  }
+  .quiz-foot button{
+    font-family:inherit;font-size:12.5px;letter-spacing:.04em;
+    background:none;border:none;color:var(--muted);
+    cursor:pointer;text-decoration:underline;text-underline-offset:3px;
+  }
+  .quiz-foot button:hover{color:var(--ink);}
+
+  /* ============ 結果画面 ============ */
+  #scr-result{padding-bottom:110px;}
+  .res-header{background:var(--ink);color:var(--cream);padding:40px 0 34px;}
+  .res-header h1{font-size:26px;font-weight:700;letter-spacing:.02em;}
+  .res-header p{font-size:13px;opacity:.85;margin-top:8px;max-width:620px;}
+  .res-group{margin-top:38px;}
+  .res-group h3{
+    font-size:16px;font-weight:700;letter-spacing:.06em;
+    display:flex;align-items:center;gap:10px;
+    border-bottom:2px solid var(--ink);padding-bottom:8px;margin-bottom:16px;
+  }
+  .res-group h3 .cnt{
+    font-size:12px;font-weight:700;border:1.5px solid var(--ink);
+    padding:0 8px;min-width:26px;text-align:center;
+  }
+  .res-group .desc{font-size:12.5px;color:var(--muted);margin:-8px 0 14px;}
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  @media(max-width:640px){ .cards{grid-template-columns:1fr;} }
+  .card{
+    border:1.5px solid var(--ink);border-top:4px solid var(--lime);
+    padding:16px 18px 14px;background:#fff;
+  }
+  .card .tag{font-size:10.5px;font-weight:700;letter-spacing:.14em;color:var(--muted);display:block;margin-bottom:6px;}
+  .card h4{font-size:15px;font-weight:700;line-height:1.5;margin-bottom:6px;}
+  .card p{font-size:12.5px;color:var(--ink-soft);}
+  .card .plan{
+    margin-top:10px;padding-top:8px;border-top:1px solid var(--line);
+    font-size:12px;color:var(--ink-soft);
+  }
+  .card .plan b{color:var(--ink);font-size:11px;letter-spacing:.08em;}
+  .card.maybe{border:1.5px solid var(--ink-soft);border-top:4px solid var(--line);background:#fff;}
+  .card.hear,.card.check{border:1px dashed var(--ink-soft);border-top:1px dashed var(--ink-soft);background:transparent;}
+  .card .kind{
+    display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.1em;
+    background:var(--ink);color:var(--cream);padding:1px 8px;margin-bottom:8px;
+  }
+  .card .qref{font-size:11.5px;color:var(--muted);margin-top:8px;border-top:1px solid var(--line);padding-top:6px;}
+  .card.watch{border:1px solid var(--line);border-top:1px solid var(--line);background:transparent;}
+  .card.watch h4{color:var(--ink-soft);}
+  .card.insert{background:var(--ink);border-color:var(--ink);border-top-color:var(--lime);}
+  .card.insert h4{color:var(--cream);}
+  .card.insert p{color:var(--cream);opacity:.85;}
+  .card.insert .tag{color:var(--lime);}
+  .empty-msg{font-size:13px;color:var(--muted);border:1px solid var(--line);padding:12px 16px;grid-column:1/-1;}
+  .res-footnote{margin-top:40px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:14px;}
+
+  .bar{position:fixed;left:0;right:0;bottom:0;background:var(--ink);color:var(--cream);z-index:50;}
+  .bar .wrap{display:flex;align-items:center;gap:14px;padding:10px 24px;}
+  .bar .spacer{flex:1;}
+  .bar button{
+    font-family:inherit;font-size:12.5px;font-weight:700;letter-spacing:.06em;
+    color:var(--ink);background:var(--cream);border:none;padding:8px 18px;cursor:pointer;
+  }
+  .bar button:hover{background:var(--lime);}
+  .bar button.ghost{background:transparent;color:var(--cream);border:1px solid var(--cream);}
+  .bar button.ghost:hover{color:var(--lime);border-color:var(--lime);background:transparent;}
+
+  @media print{
+    .bar,.res-header p{display:none!important;}
+    .res-header{padding:16px 0;background:none;color:var(--ink);}
+    body{font-size:12px;}
+    .card{break-inside:avoid;}
+    #scr-result{padding-bottom:0;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ 表紙 ============ -->
+<div class="screen active" id="scr-cover">
+  <div class="wrap">
+    <span class="eyebrow">コンテンツ×SEOコンサルタント育成研修｜第5部 ワークツール</span>
+    <h1>提案ガイド診断<br>担当サイトに、いま何が提案できるか</h1>
+    <p class="lead">担当している案件（サイト・顧客）をひとつ思い浮かべてください。質問にひとつずつ答えていくと、最後に「提案すべきこと」「ヒアリングすべきこと」「分析・確認すべきこと」のリストが出ます。回答は保存されません。</p>
+    <div class="rules">
+      <div><b>RULE 01 — カードは拾って進む</b>提案カードは1枚とは限りません。最後まで答えると複数枚集まり、それが組み合わせ提案の素材になります。</div>
+      <div><b>RULE 02 — 白黒つけなくていい</b>「どちらかといえば」の答えも歓迎。答えの濃淡が、提案の確度に反映されます。わからないことは、次にやるべきアクションに変換されます。</div>
+      <div><b>RULE 03 — 何度でも回し直す</b>症状が複数あるなら、答えを変えてもう一周。仕上げは逆引き一覧マップで組み合わせを肉付けします。</div>
+    </div>
+    <button class="start-btn" id="btn-start" type="button">診断を始める　—　提案できる商材を探す</button>
+  </div>
+</div>
+
+<!-- ============ 質問画面 ============ -->
+<div class="screen" id="scr-quiz">
+  <div class="progress-rail"><div class="progress-fill" id="prog"></div></div>
+  <div class="wrap">
+    <div class="quiz-top">
+      <span id="q-counter">Q1</span>
+      <span id="q-total"></span>
+    </div>
+    <span class="zone-chip" id="zone-chip"></span>
+    <div class="zone-note" id="zone-note" style="display:none;"></div>
+    <div class="q-text" id="q-text"></div>
+    <div class="q-hint" id="q-hint"></div>
+    <div class="answers">
+      <button type="button" id="btn-yes">YES</button>
+      <button type="button" class="lean" id="btn-ly">どちらかといえばYES</button>
+      <button type="button" class="lean" id="btn-ln">どちらかといえばNO</button>
+      <button type="button" id="btn-no">NO</button>
+      <div class="divider"></div>
+      <button type="button" id="btn-unk">わからない<span>→ 聞くべきこと・確かめるべきことに変換されます</span></button>
+    </div>
+    <div class="quiz-foot">
+      <button type="button" id="btn-back">← 前の質問に戻る</button>
+      <button type="button" id="btn-restart">最初からやり直す</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 結果画面 ============ -->
+<div class="screen" id="scr-result">
+  <div class="res-header">
+    <div class="wrap">
+      <span class="eyebrow">診断結果</span>
+      <h1>この案件で次にやること</h1>
+      <p>複数のカードが出るのが正常です（実際の提案は組み合わせ）。組み合わせの肉付けは「ケース×商材の逆引き一覧マップ」で行ってください。</p>
+    </div>
+  </div>
+  <div class="wrap">
+
+    <div class="res-group">
+      <h3>提案すべきこと<span class="cnt" id="cnt-sure">0</span></h3>
+      <p class="desc">回答から確度高く導かれた提案です。</p>
+      <div class="cards" id="g-sure"></div>
+    </div>
+
+    <div class="res-group">
+      <h3>提案の可能性あり<span class="cnt" id="cnt-maybe">0</span></h3>
+      <p class="desc">「どちらかといえば」の答えが根拠に含まれる提案です。提案の前に該当の状況をもう一段確かめてください。</p>
+      <div class="cards" id="g-maybe"></div>
+    </div>
+
+    <div class="res-group">
+      <h3>ヒアリングすべきこと<span class="cnt" id="cnt-hear">0</span></h3>
+      <p class="desc">「わからない」のうち顧客に聞けば分かること。次の定例・打ち合わせで使えます。</p>
+      <div class="cards" id="g-hear"></div>
+    </div>
+
+    <div class="res-group">
+      <h3>分析・確認すべきこと<span class="cnt" id="cnt-check">0</span></h3>
+      <p class="desc">「わからない」のうちデータやサイトを見れば分かること。まず社内・手元でできることが先です。</p>
+      <div class="cards" id="g-check"></div>
+    </div>
+
+    <div class="res-group">
+      <h3>観察・様子見（いまは売らない）<span class="cnt" id="cnt-watch">0</span></h3>
+      <div class="cards" id="g-watch"></div>
+    </div>
+
+    <div class="res-group">
+      <h3>差し込みカード<span class="cnt" id="cnt-insert">0</span></h3>
+      <div class="cards" id="g-insert"></div>
+    </div>
+
+    <p class="res-footnote">
+      取材・撮影・図版などのオプションは各制作商材に付けられます。パフォーマンス改善はバラ売りせず初期＋月額のパッケージで提案します。
+    </p>
+  </div>
+</div>
+
+<div class="bar" id="res-bar" style="display:none;">
+  <div class="wrap">
+    <span style="font-size:12.5px;letter-spacing:.04em;">診断おわり</span>
+    <span class="spacer"></span>
+    <button class="ghost" id="btn-fix" type="button">ひとつ前に戻って修正</button>
+    <button class="ghost" id="btn-again" type="button">最初からもう一周</button>
+    <button id="btn-print" type="button">結果を印刷</button>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ================= データ定義 =================
+   answer: 'yes' | 'ly'(どちらかといえば はい) | 'ln'(どちらかといえば いいえ) | 'no' | 'unknown' | null
+
+   スコアリングの考え方：
+   - firm(はい/いいえ)＝強度1.0lean(どちらかといえば)＝強度0.7
+   - 提案は経路上の根拠の最小強度で確度が決まる：
+     すべてfirm → 「提案すべきこと」（確度高）
+     leanが1つでも挟まる → 「提案の可能性あり」
+   - ゾーンの入口をleanで通った場合（例：内製か外注か→どちらかといえば内製）は
+     両側のゾーンを弱い強度(0.7)で開き下流の提案は「可能性あり」止まりになる
+*/
+
+const ZONES = {
+  trunk:{label:'まずこの3問'},
+  A:{label:'ゾーンA｜新規・立ち上げ — 制作プランの世界'},
+  B:{label:'ゾーンB｜拡張 — 専門編集型の世界'},
+  C:{label:'ゾーンC｜立て直し — パフォーマンス改善の世界'},
+  D:{label:'ゾーンD｜内製支援の世界', note:'（注意）内製化は「予算をかけない」という選択。売り込まずヒアリングで困りごとを見つけにいくゾーンです。'},
+  Z:{label:'最後に｜全案件共通の1問'}
+};
+
+const YES_SIDE=v=>v==='yes'||v==='ly';
+const NO_SIDE=v=>v==='no'||v==='ln';
+/* コンポーネント強度 */
+const CY=v=>v==='yes'?1:(v==='ly'?0.7:0);   /* はい側の根拠強度 */
+const CN=v=>v==='no'?1:(v==='ln'?0.7:0);    /* いいえ側の根拠強度 */
+
+const QUESTIONS = [
+  /* --- 幹 --- */
+  { id:'q1', zone:'trunk',
+    text:'サイトに一定数のコンテンツがありますか？',
+    hint:'YESの目安は数百本程度のコンテンツがある状態、どちらかといえばYESは数十本後半から百本程度、どちらかといえばNOはあまり積極的にコンテンツを作ってこなかった状態、NOはコンテンツがほとんどない状態です',
+    unknown:{kind:'サイト確認', act:'サイトの記事一覧やサイトマップを見て本数を確かめる（site:検索でもすぐ分かる）'} },
+  { id:'q2', zone:'trunk',
+    text:'コンテンツ運用の主体は顧客の内製ですか？',
+    hint:'AIを使った内製も含みます。外注と内製が混ざっている場合は「どちらかといえば」で答えてください（両方のゾーンを見にいきます）',
+    show:a=>a.q1!=='no',
+    unknown:{kind:'ヒアリング', act:'制作体制を聞く：「記事はどなたが、どうやって作っていますか？外部パートナーは入っていますか？」'} },
+  { id:'q3', zone:'trunk',
+    text:'コンテンツで成果は出ていますか？',
+    hint:'流入やCVやリードが伸びている、または顧客が満足している状態です。一部の記事だけ成果が出ている場合や、出てはいるが流入が下がってきている場合は「どちらかといえば」で答えてください',
+    show:a=>a.q1!=='no' && (NO_SIDE(a.q2)||a.q2==='ly'),
+    unknown:{kind:'データ分析',
+      act:'まずGSCとGA4で直近12か月の流入・CV・リードの推移を見る',
+      plan:'GA4/GSCの権限がない場合や、分析をプランに含めていない案件なら、全体パフォーマンス分析の提案の入口になる'} },
+
+  /* --- Zone A --- */
+  { id:'a1', zone:'A',
+    text:'ドメインやブランドの力はありますか？',
+    hint:'指名検索がある、知名度がある、他事業の実績がある、などです',
+    unknown:{kind:'データ分析', act:'まずGSCでブランド系クエリの量を見る。被リンクや企業の知名度もあわせて確かめる'} },
+  { id:'a2', zone:'A',
+    text:'事業やサービスに直結するテーマは明確ですか？',
+    hint:'CVに近いニーズが定まっているかということです',
+    show:a=>NO_SIDE(a.a1)||a.a1==='unknown',
+    unknown:{kind:'ヒアリング', act:'事業の優先順位を聞く：「いちばん問い合わせを増やしたい商品・サービスはどれですか？」'} },
+  { id:'a3', zone:'A',
+    text:'制作をまるごと任せたい意向ですか？',
+    hint:'外注に回せる予算があるかということです',
+    unknown:{kind:'ヒアリング', act:'予算感と任せ方の意向を聞く：「制作はどこまで社内でやりたいですか？外部に任せたい範囲はどこですか？」'} },
+  { id:'a4', zone:'A',
+    text:'金融や医療や法律など高難度の領域ですか？',
+    hint:'いわゆるYMYL領域かということです',
+    show:a=>YES_SIDE(a.a3),
+    unknown:{kind:'サイト確認', act:'扱う領域の規制や監修の要否を確認する'} },
+  { id:'a5', zone:'A',
+    text:'叩き台があれば社内で仕上げて公開できますか？',
+    hint:'原稿の叩き台を渡したときに、仕上げて公開までできる体制が社内にあるかということです',
+    show:a=>NO_SIDE(a.a3)||a.a3==='unknown',
+    unknown:{kind:'ヒアリング', act:'社内の編集・公開体制を聞く：「原稿の叩き台があれば、仕上げて公開までできる方はいますか？」'} },
+
+  /* --- Zone C --- */
+  { id:'c1', zone:'C',
+    text:'今まで作ったコンテンツに見直すべき問題がありますか？',
+    hint:'例えば次のようなサインです\n・作ったまま更新されない記事が大量に放置されている\n・作っている割に成果が出ていない\n・増やしているのに流入が減っている\n・トピックから外れた記事が多い\n・細切れ記事やカニバリがある\n・情報が古いまま、または過去の量産で品質がバラバラ',
+    unknown:{kind:'データ分析',
+      act:'まずGSCとGA4で「更新が止まった記事の流入」「成果につながっていない記事の割合」を見る',
+      plan:'手元のデータで判断がつかない場合や、分析をプランに含めていない案件なら、全体パフォーマンス分析（初期）の提案の入口になる'} },
+  { id:'c2', zone:'C',
+    text:'どこに問題があるか見当はついていますか？',
+    show:a=>YES_SIDE(a.c1)||a.c1==='unknown',
+    unknown:{kind:'データ分析',
+      act:'まず手元のGSCとGA4で当たりをつける',
+      plan:'それでも掴めなければ、全体パフォーマンス分析から入る提案が正解になる'} },
+  { id:'c3', zone:'C',
+    text:'競合に面を取られている感覚はありますか？',
+    hint:'負けている感覚があるかということです',
+    show:a=>(YES_SIDE(a.c1)||a.c1==='unknown') && YES_SIDE(a.c2),
+    unknown:{kind:'データ分析',
+      act:'まず主要キーワードで実際に検索して、上位の顔ぶれと自社の位置を見る（手作業ですぐできる）',
+      plan:'体系的に確かめるなら、競合ギャップ分析の提案につなげる'} },
+
+  /* --- Zone B --- */
+  { id:'b1', zone:'B',
+    text:'自社だけが持つ情報や自社で集めた独自データを使った記事がありますか？',
+    hint:'例えば、独自調査、取材、実績データの公開などです',
+    unknown:{kind:'サイト確認', act:'既存記事を読んで棚卸しし、独自データ・取材・事例の本数を数える'} },
+  { id:'b2', zone:'B',
+    text:'満足度の高い顧客の声や社内の専門家の知見を記事にできますか？',
+    show:a=>NO_SIDE(a.b1)||a.b1==='unknown',
+    unknown:{kind:'ヒアリング', act:'「お客様の声や、社内で語れる専門家の方はいらっしゃいますか？」'} },
+  { id:'b3', zone:'B',
+    text:'問い合わせフォーム以外にも資料請求やダウンロードのような申し込みの入り口がありますか？',
+    unknown:{kind:'サイト確認', act:'主要記事からのCV導線やダウンロード資料の有無をサイトで確かめる'} },
+  { id:'b4', zone:'B',
+    text:'サービスページやLPが薄い・古い・作りっぱなしになっていますか？',
+    show:a=>NO_SIDE(a.b3)||a.b3==='unknown',
+    unknown:{kind:'サイト確認', act:'サービスページ・LPの更新日・厚み・訴求を見る'} },
+  { id:'b5', zone:'B',
+    text:'獲得したリードは受注や有効な商談につながっていますか？',
+    hint:'展示会やウェビナー後の追いかけができているかということです',
+    unknown:{kind:'ヒアリング', act:'「展示会やウェビナーで取ったリードは、その後どうなっていますか？」'} },
+  { id:'b6', zone:'B',
+    text:'定期開催しているセミナーやウェビナーは終わった後に記事化されていますか？',
+    hint:'開催していない場合は「YES」を選んでください',
+    unknown:{kind:'ヒアリング', act:'「セミナーやウェビナーは定期開催していますか？終わった後、記事などにしていますか？」'} },
+  { id:'b7', zone:'B',
+    text:'商品やサービスの説明が複雑で文章だけでは理解してもらいにくいですか？',
+    hint:'図やイラストや動画があった方が伝わりやすい商品やサービスかということです',
+    unknown:{kind:'ヒアリング', act:'「届けたい相手はどんな方ですか？長い文章は読まれる層ですか？」'} },
+  { id:'b8', zone:'B',
+    text:'業界特有の専門用語を解説する記事が少ないですか？',
+    hint:'専門用語が多く使われる業界なのに、その意味を説明する記事が手薄な状態です',
+    unknown:{kind:'サイト確認', act:'用語まわりのコンテンツの有無と、検索結果での競合・AIの回答のされ方を見る'} },
+
+  /* --- Zone D --- */
+  { id:'d1', zone:'D',
+    text:'内製でコンテンツマーケティングとしての成果は出ていますか？',
+    unknown:{kind:'ヒアリング', act:'「内製でやってみて、成果は上がっていますか？手応えはどうですか？」'} },
+  { id:'d2', zone:'D',
+    text:'調査記事やインタビュー記事やホワイトペーパーが不足していますか？',
+    hint:'内製のチームだけでは作りにくいコンテンツの種類です',
+    show:a=>YES_SIDE(a.d1)||a.d1==='unknown',
+    unknown:{kind:'サイト確認', act:'調査記事・インタビュー・ホワイトペーパーの有無をサイトで数える'} },
+  { id:'d3', zone:'D',
+    text:'記事の品質や誤情報や表現のルールについて困りごとがありますか？',
+    hint:'品質が上げられない、誤情報が怖い、トンマナや業法対応が揃わない、などです',
+    show:a=>NO_SIDE(a.d1)||a.d1==='unknown',
+    unknown:{kind:'ヒアリング', act:'「品質やファクトチェックで不安はありませんか？表現のルールはありますか？」'} },
+  { id:'d4', zone:'D',
+    text:'何を書けばいいか決められないという困りごとがありますか？',
+    hint:'構成が作れない、ネタが枯れた、なども含みます',
+    show:a=>NO_SIDE(a.d1)||a.d1==='unknown',
+    unknown:{kind:'ヒアリング', act:'「どの工程にいちばん時間がかかっていますか？ネタ切れは起きていませんか？」'} },
+  { id:'d5', zone:'D',
+    text:'進行が回らないという困りごとがありますか？',
+    hint:'担当者が一人で抱えて疲弊している状態を含みます',
+    show:a=>NO_SIDE(a.d1)||a.d1==='unknown',
+    unknown:{kind:'ヒアリング', act:'「担当の方おひとりで回していますか？負担になっていませんか？」'} },
+  { id:'d6', zone:'D',
+    text:'書き手が育たないという困りごとがありますか？',
+    hint:'社内にノウハウが貯まらない状態を含みます',
+    show:a=>NO_SIDE(a.d1)||a.d1==='unknown',
+    unknown:{kind:'ヒアリング', act:'「社内で書ける方は増えていますか？ノウハウは貯まっていますか？」'} },
+
+  /* --- Z --- */
+  { id:'z', zone:'Z',
+    text:'こちらから提案した施策が実行に移されずに溜まっていませんか？',
+    hint:'例えば次のような言葉が出ている状態です。「手が回らない」「全部は社内では厳しい」「宿題が消化できない」',
+    unknown:{kind:'観察', act:'定例のたびに宿題や提案の消化状況を見ておく'} },
+];
+
+const ans = {};
+QUESTIONS.forEach(q=>ans[q.id]=null);
+let history = [];
+
+/* ================= ゾーン活性度（0=閉／0.7=弱く開く／1=開く） ================= */
+function zoneAct(){
+  const z={A:0,B:0,C:0,D:0};
+  const q1=ans.q1,q2=ans.q2,q3=ans.q3;
+
+  /* A：資産が少ない側 */
+  if(q1==='no'||q1==='ln') z.A=1;
+  else if(q1==='unknown') z.A=0.7;
+
+  /* 外注枝（q3へ続く道）の強度 */
+  let branch=0;
+  if(q1==='yes'||q1==='ly'||q1==='unknown'){
+    if(q2==='no') branch=1;
+    else if(q2==='ln') branch=1;          /* どちらかといえば外注 → 外注枝は本線 */
+    else if(q2==='ly') branch=0.7;        /* どちらかといえば内製 → 外注枝も弱く見る */
+  }
+
+  /* D：内製側 */
+  if(q1==='yes'||q1==='ly'||q1==='unknown'){
+    if(q2==='yes') z.D=1;
+    else if(q2==='ly') z.D=1;             /* どちらかといえば内製 → D本線 */
+    else if(q2==='ln') z.D=0.7;           /* どちらかといえば外注 → Dも弱く見る */
+  }
+  /* A→D合流：任せる予算・体制がない */
+  if(z.A>0 && NO_SIDE(ans.a5)) z.D=Math.max(z.D, Math.min(z.A, ans.a5==='no'?1:0.7));
+
+  /* C／B：成果の答えで割り振り（leanは両開き） */
+  if(branch>0){
+    if(q3==='no'){ z.C=Math.max(z.C,branch); }
+    else if(q3==='ln'){ z.C=Math.max(z.C,branch); z.B=Math.max(z.B,Math.min(branch,0.7)); }
+    else if(q3==='ly'){ z.B=Math.max(z.B,branch); z.C=Math.max(z.C,Math.min(branch,0.7)); }
+    else if(q3==='yes'){ z.B=Math.max(z.B,branch); }
+    else if(q3==='unknown'){ z.C=Math.max(z.C,Math.min(branch,0.7)); }
+  }
+  /* C→B：症状がない → 受け皿・導線を疑う */
+  if(z.C>0 && NO_SIDE(ans.c1)) z.B=Math.max(z.B, Math.min(z.C, ans.c1==='no'?1:0.7));
+  /* D→B：内製で成果あり＆空きあり → 上乗せ */
+  if(z.D>0 && YES_SIDE(ans.d1) && YES_SIDE(ans.d2))
+    z.B=Math.max(z.B, Math.min(z.D, CY(ans.d1), CY(ans.d2))||0);
+
+  return z;
+}
+
+function questionVisible(q, z){
+  if(q.zone==='trunk' || q.zone==='Z'){
+    return q.show ? q.show(ans) : true;
+  }
+  if(!(z[q.zone]>0)) return false;
+  return q.show ? q.show(ans) : true;
+}
+function visibleList(){
+  const z=zoneAct();
+  return QUESTIONS.filter(q=>questionVisible(q,z));
+}
+function currentQuestion(){
+  return visibleList().find(q=>ans[q.id]===null) || null;
+}
+
+/* ================= 結果ロジック ================= */
+function computeResults(){
+  const z=zoneAct();
+  const SURE=[],MAYBE=[],HEAR=[],CHECK=[],W=[],I=[];
+  const visIds = new Set(visibleList().map(q=>q.id));
+  const on = id=>visIds.has(id) ? ans[id] : null;
+
+  /* 提案を確度付きで積む：comps＝根拠強度の配列gate＝ゾーン活性度 */
+  function addP(gate, comps, tag, t, b){
+    if(gate<=0) return;
+    if(comps.some(c=>!c || c<=0)) return;
+    const strength=Math.min(gate, ...comps);
+    const item={tag,t,b};
+    if(strength>=0.99) SURE.push(item); else MAYBE.push(item);
+    return true;
+  }
+
+  /* --- Zone A --- */
+  if(z.A>0){
+    addP(z.A,[CY(on('a1'))],'新規・立ち上げ','キーワード調査＋コラム制作プラン（積極提案）','作れば素直に伸びる局面。ニーズのまとまりを設計して計画的に作っていく。');
+    addP(z.A,[CN(on('a1')),CY(on('a2'))],'新規・立ち上げ','キーワード調査＋コラム制作プラン＋サービスページ','CVに近い受け皿から一本一本丁寧に作っていく。');
+    addP(z.A,[CN(on('a1')),CN(on('a2'))],'新規・立ち上げ','キーワード調査（KWリスト・方針策定）','まずトピックの軸の設計から。（注意）一般的な情報提供型コンテンツで面を取りに行かない。');
+    addP(z.A,[CY(on('a3')),CY(on('a4'))],'制作プラン','プレミアムプラン（監修付き）','高難度領域は監修付きのプレミアムが前提。');
+    addP(z.A,[CY(on('a3')),CN(on('a4'))],'制作プラン','スタンダードプラン','標準の制作プランで進める。');
+    const a3c = on('a3')==='unknown' ? 0.7 : CN(on('a3'));
+    addP(z.A,[a3c,CY(on('a5'))],'制作プラン','ライトプラン（コスト重視・スピード重視）','編集の目を通した一次原稿を安く早く納品。仕上げ・ファクトチェック・公開は顧客側という役割分担をはっきり見せる。');
+  }
+
+  /* --- Zone C --- */
+  if(z.C>0){
+    addP(z.C,[CY(on('c1'))],'パフォーマンス改善','パフォーマンス改善パッケージ（初期＋月額）','バラ売りせず初期と月額をバランスよく組んで提案する。月額はリライト・統合・CTA/内部リンク改善・記事トラッキング。');
+    addP(z.C,[CY(on('c1')),CN(on('c2'))],'パフォーマンス改善｜初期','全体パフォーマンス分析（ポートフォリオ整理込み）','まず全記事を棚卸しして直す・まとめる・減らす・伸ばすに仕分ける。');
+    addP(z.C,[CY(on('c1')),CY(on('c2')),CY(on('c3'))],'パフォーマンス改善｜初期','競合ギャップ分析＋削除/統合/リライト対応整理','競合との重ね合わせでどこが空いているか・取られているかを見る。');
+    addP(z.C,[CY(on('c1')),CY(on('c2')),CN(on('c3'))],'パフォーマンス改善｜初期','削除/統合/リライト対応整理から','見当がついている問題を対応整理に落とし月額で一記事ずつ手を入れていく。');
+  }
+
+  /* --- Zone B --- */
+  let bProposed=false;
+  if(z.B>0){
+    if(addP(z.B,[CN(on('b1')),CY(on('b2'))],'専門編集型','インタビュー記事・導入事例','その声と知見をコンテンツに。第三者の声は自社の主張より強くAIにも競合にも代替されない。')) bProposed=true;
+    if(addP(z.B,[CN(on('b1')),CN(on('b2'))],'専門編集型','アンケート調査記事','一次データを自ら作って引用される側に回る。')) bProposed=true;
+    if(addP(z.B,[CN(on('b3')),CY(on('b4'))],'専門編集型','サービスページ改修・LP改修','せっかくの流入を受け止める器から直す。')) bProposed=true;
+    if(addP(z.B,[CN(on('b3')),CN(on('b4'))],'専門編集型','ホワイトペーパー＋ダウンロード導線','問い合わせの手前に中間CVの受け皿を作る。')) bProposed=true;
+    if(addP(z.B,[CN(on('b5'))],'専門編集型','ホワイトペーパー＋メルマガ等のナーチャリング素材','リードを温めて商談化までつなげる素材を用意する。（補足）メルマガの商材上の扱いは要確認。')) bProposed=true;
+    if(addP(z.B,[CN(on('b6'))],'専門編集型','セミナー・イベントレポート記事','開催のたびにコンテンツが1本生まれる形にする。')) bProposed=true;
+    if(addP(z.B,[CY(on('b7'))],'専門編集型','漫画・動画','形式を変えて読む負担を下げて届ける。SNSや営業現場でも使い回せる。')) bProposed=true;
+    if(addP(z.B,[CY(on('b8'))],'専門編集型','用語集','トピックの軸を低コストで補強。（注意）1用語1記事の量産はAIの回答に代替されやすく慎重な判断が必要。')) bProposed=true;
+    const bIds=['b1','b2','b3','b4','b5','b6','b7','b8'];
+    const bVisible=bIds.filter(id=>visIds.has(id));
+    const bDone=bVisible.length>0 && bVisible.every(id=>ans[id]!==null);
+    const bUnknown=bVisible.some(id=>ans[id]==='unknown');
+    if(bDone && !bProposed && !bUnknown){
+      W.push({t:'月次レポートで観察を継続', b:'いまは大きな欠けなし。次の伸びしろをレポートの見解に蒔いておく。'});
+    }
+  }
+
+  /* --- Zone D --- */
+  if(z.D>0){
+    if(YES_SIDE(on('d1')) && NO_SIDE(on('d2')))
+      W.push({t:'観察を継続', b:'うまくいっている内製にいま割り込む必要はない。定例で困りごとが出てきたら拾う。'});
+    let dProposed=false;
+    if(addP(z.D,[CY(on('d3'))],'内製支援','AI生成原稿チェック／記事制作ガイドライン作成（＋監修者アサイン）','公開前に編集のプロの目を入れる工程と守るべきルールの明文化から。')) dProposed=true;
+    if(addP(z.D,[CY(on('d4'))],'内製支援','要件作成（構成案）・キーワード調査','上流工程だけ当社が担い執筆は内製のまま残す形にできる。')) dProposed=true;
+    if(addP(z.D,[CY(on('d5'))],'内製支援','進行管理／ディレクション・会議参加','回る体制づくりを外に出して担当者は意思決定に集中してもらう。')) dProposed=true;
+    if(addP(z.D,[CY(on('d6'))],'内製支援','セミナー（内製化支援）','ノウハウを社内の資産として残す形で支援する。')) dProposed=true;
+    if(dProposed){
+      const anyFirm=['d3','d4','d5','d6'].some(id=>on(id)==='yes') && z.D>=0.99;
+      const item={tag:'内製支援｜組み合わせ', t:'＋ナイルコンテンツスタジオ（初期設定・ガイドライン設計込み）', b:'自社のルール・業法・トンマナを織り込んだAI制作ツール。どの困りごとにも組み合わせて提案できる。'};
+      (anyFirm?SURE:MAYBE).push(item);
+    }
+    const dIds=['d3','d4','d5','d6'];
+    const dVisible=dIds.filter(id=>visIds.has(id));
+    if(NO_SIDE(on('d1')) && dVisible.length>0 && dVisible.every(id=>NO_SIDE(ans[id]))){
+      W.push({t:'ヒアリング継続', b:'困りごとはこれから出てくる。定例の会話の中で拾い続ける。'});
+    }
+  }
+
+  /* --- Z --- */
+  if(on('z')==='yes')
+    I.push({tag:'常駐支援', t:'常駐・中の人プラン', b:'実行部隊ごと中に入る提案。溜まった提案がそのまま成果に変わる（N万円＝目安N時間。全メニュー＋コンテンツスタジオを組み合わせて中で回す）。'});
+  else if(on('z')==='ly')
+    I.push({tag:'常駐支援｜兆しあり', t:'常駐・中の人プラン（様子を見て差し込む）', b:'実行の詰まりの兆しあり。「私がお手伝いしますよ」の一言から様子を見て詰まりがはっきりしたら実行部隊ごと中に入る提案へ。'});
+
+  /* --- わからない → ヒアリング / 分析・確認 --- */
+  QUESTIONS.forEach(q=>{
+    if(visIds.has(q.id) && ans[q.id]==='unknown' && q.unknown){
+      const item={kind:q.unknown.kind, act:q.unknown.act, plan:q.unknown.plan||null, q:q.text};
+      if(q.unknown.kind==='ヒアリング') HEAR.push(item); else CHECK.push(item);
+    }
+  });
+
+  return {SURE,MAYBE,HEAR,CHECK,W,I};
+}
+
+/* ================= 画面制御 ================= */
+const $=id=>document.getElementById(id);
+function showScreen(name){
+  ['scr-cover','scr-quiz','scr-result'].forEach(s=>$(s).classList.toggle('active', s===name));
+  $('res-bar').style.display = (name==='scr-result') ? 'block' : 'none';
+  window.scrollTo({top:0});
+}
+
+function renderQuiz(){
+  const q=currentQuestion();
+  if(!q){ renderResult(); showScreen('scr-result'); return; }
+  const list=visibleList();
+  const idx=list.findIndex(x=>x.id===q.id);
+  $('q-counter').textContent='Q'+(idx+1);
+  $('q-total').textContent='現時点の質問数：'+list.length+'問（答えによって増減します）';
+  $('prog').style.width=Math.round(idx/list.length*100)+'%';
+  $('zone-chip').textContent=ZONES[q.zone].label;
+  const note=ZONES[q.zone].note;
+  $('zone-note').style.display=note?'block':'none';
+  $('zone-note').textContent=note||'';
+  $('q-text').textContent=q.text;
+  $('q-hint').textContent=q.hint||'';
+  $('btn-back').style.visibility = history.length ? 'visible' : 'hidden';
+}
+
+function answer(v){
+  const q=currentQuestion();
+  if(!q) return;
+  ans[q.id]=v;
+  history.push(q.id);
+  renderQuiz();
+}
+function goBack(){
+  const last=history.pop();
+  if(last) ans[last]=null;
+  renderQuiz();
+  showScreen('scr-quiz');
+}
+function restart(){
+  QUESTIONS.forEach(q=>ans[q.id]=null);
+  history=[];
+  renderQuiz();
+  showScreen('scr-quiz');
+}
+
+function card(item, cls){
+  const d=document.createElement('div');
+  d.className='card '+(cls||'');
+  let html='';
+  if(cls==='hear'||cls==='check'){
+    html='<span class="kind">'+item.kind+'</span>'
+        +'<h4>'+item.act+'</h4>'
+        +(item.plan?'<div class="plan"><b>提案につなげるなら：</b>'+item.plan+'</div>':'')
+        +'<div class="qref">対象の質問：'+item.q+'</div>';
+  }else{
+    if(item.tag) html+='<span class="tag">'+item.tag+'</span>';
+    html+='<h4>'+item.t+'</h4><p>'+item.b+'</p>';
+  }
+  d.innerHTML=html;
+  return d;
+}
+
+function renderResult(){
+  const r=computeResults();
+  const fill=(gid,cid,items,cls,emptyText)=>{
+    const g=$(gid); g.innerHTML='';
+    if(items.length===0){
+      const e=document.createElement('div');
+      e.className='empty-msg'; e.textContent=emptyText;
+      g.appendChild(e);
+    }else items.forEach(it=>g.appendChild(card(it,cls)));
+    $(cid).textContent=items.length;
+  };
+  fill('g-sure','cnt-sure',r.SURE,'','確度の高い提案はまだありません。');
+  fill('g-maybe','cnt-maybe',r.MAYBE,'maybe','該当なし。');
+  fill('g-hear','cnt-hear',r.HEAR,'hear','該当なし。');
+  fill('g-check','cnt-check',r.CHECK,'check','該当なし。');
+  fill('g-watch','cnt-watch',r.W,'watch','該当なし。');
+  fill('g-insert','cnt-insert',r.I,'insert','該当なし。提案が実行されず詰まってきたらここに中の人プランが出ます。');
+}
+
+/* ================= イベント ================= */
+$('btn-start').addEventListener('click',()=>{ renderQuiz(); showScreen('scr-quiz'); });
+$('btn-yes').addEventListener('click',()=>answer('yes'));
+$('btn-ly').addEventListener('click',()=>answer('ly'));
+$('btn-ln').addEventListener('click',()=>answer('ln'));
+$('btn-no').addEventListener('click',()=>answer('no'));
+$('btn-unk').addEventListener('click',()=>answer('unknown'));
+$('btn-back').addEventListener('click',goBack);
+$('btn-restart').addEventListener('click',restart);
+$('btn-fix').addEventListener('click',goBack);
+$('btn-again').addEventListener('click',restart);
+$('btn-print').addEventListener('click',()=>window.print());
+</script>
+</body>
+</html>
