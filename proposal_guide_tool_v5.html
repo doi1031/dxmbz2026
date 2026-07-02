@@ -76,20 +76,21 @@
     margin-top:14px;line-height:1.75;
     white-space:pre-line;
   }
-  .answers{margin-top:30px;display:grid;gap:10px;max-width:480px;}
+  .answers{margin-top:30px;display:grid;gap:10px;max-width:540px;}
   .answers button{
-    font-family:inherit;font-size:15px;font-weight:700;letter-spacing:.04em;
+    font-family:inherit;font-size:15px;letter-spacing:.02em;
     text-align:left;
     background:#fff;color:var(--ink);
     border:1.5px solid var(--ink);
-    padding:12px 22px;cursor:pointer;
+    padding:12px 20px;cursor:pointer;
     transition:background .12s,color .12s;
+    display:flex;flex-wrap:wrap;align-items:baseline;column-gap:10px;row-gap:2px;
   }
-  .answers button.lean{font-weight:400;}
+  .answers button .deg{font-weight:700;flex:0 0 auto;}
+  .answers button .opt{font-weight:400;font-size:13px;color:var(--muted);letter-spacing:0;}
   .answers button:hover{background:var(--ink);color:var(--cream);}
+  .answers button:hover .opt{color:var(--cream);opacity:.8;}
   .answers button:focus-visible{outline:2px solid var(--lime);outline-offset:2px;}
-  .answers button span{display:block;font-size:11.5px;font-weight:400;color:var(--muted);margin-top:2px;letter-spacing:0;}
-  .answers button:hover span{color:var(--cream);opacity:.75;}
   .answers .divider{border-top:1px dashed var(--line);margin:4px 0;}
   .quiz-foot{
     margin-top:44px;padding:16px 0 48px;border-top:1px solid var(--line);
@@ -198,12 +199,12 @@
     <div class="q-text" id="q-text"></div>
     <div class="q-hint" id="q-hint"></div>
     <div class="answers">
-      <button type="button" id="btn-yes">YES</button>
-      <button type="button" class="lean" id="btn-ly">どちらかといえばYES</button>
-      <button type="button" class="lean" id="btn-ln">どちらかといえばNO</button>
-      <button type="button" id="btn-no">NO</button>
+      <button type="button" id="btn-yes"></button>
+      <button type="button" id="btn-ly"></button>
+      <button type="button" id="btn-ln"></button>
+      <button type="button" id="btn-no"></button>
       <div class="divider"></div>
-      <button type="button" id="btn-unk">わからない<span>→ 聞くべきこと・確かめるべきことに変換されます</span></button>
+      <button type="button" id="btn-unk"></button>
     </div>
     <div class="quiz-foot">
       <button type="button" id="btn-back">← 前の質問に戻る</button>
@@ -306,17 +307,17 @@ const CN=v=>v==='no'?1:(v==='ln'?0.7:0);    /* いいえ側の根拠強度 */
 const QUESTIONS = [
   /* --- 幹 --- */
   { id:'q1', zone:'trunk',
-    text:'既にサイトには多くのコンテンツ（記事コンテンツ）がありますか？',
-    hint:'「YES」の目安は500本～程度のコンテンツがある状態、「どちらかといえばYES」は100本～、「どちらかといえばNO」は50本～、「NO」はコンテンツがほとんどない状態です',
+    text:'サイトには記事コンテンツが既に多数ある',
+    opts:{ yes:'数百本以上ある', ly:'100本程度はある', ln:'数十本ほどしかない', no:'ほとんどない' },
     unknown:{kind:'サイト確認', act:'サイトの記事一覧やサイトマップを見て本数を確かめる（site:検索でもすぐ分かる）'} },
   { id:'q2', zone:'trunk',
-    text:'コンテンツ制作は主に内製ですか？',
-    hint:'AIを使った内製も含みます。外注と内製が混ざっている場合は「どちらかといえば」で比率を答えてください（両方のゾーンを見にいきます）',
+    text:'コンテンツ制作は主に内製している（AIを使った内製も含む）',
+    opts:{ yes:'ほぼ社内・内製で作っている', ly:'内製が中心だが一部は外注', ln:'外注が中心だが一部は内製', no:'ほぼ外注で作っている' },
     show:a=>a.q1!=='no',
     unknown:{kind:'ヒアリング', act:'制作体制を聞く：「記事はどなたが、どうやって作っていますか？外部パートナーは入っていますか？」'} },
   { id:'q3', zone:'trunk',
-    text:'コンテンツの成果は出ていますか？',
-    hint:'流入やCVやリードが伸びている、または顧客が満足している状態です。一部の記事だけ成果が出ている場合や、出てはいるが流入が下がってきているなどの場合は「どちらかといえば」で答えてください',
+    text:'コンテンツの成果は出ている',
+    opts:{ yes:'流入・CV・リードが順調に伸びている', ly:'一部で成果は出ている（または伸びが鈍ってきた）', ln:'成果は乏しい（一部を除き伸びていない）', no:'ほとんど成果が出ていない' },
     show:a=>a.q1!=='no' && (NO_SIDE(a.q2)||a.q2==='ly'),
     unknown:{kind:'データ分析',
       act:'まずGSCとGA4で直近12か月の流入・CV・リードの推移を見る',
@@ -324,117 +325,125 @@ const QUESTIONS = [
 
   /* --- Zone A --- */
   { id:'a1', zone:'A',
-    text:'ドメインやブランドの力はありますか？',
-    hint:'指名検索が多い、知名度がある、被リンクやネット上の言及・評判の数が豊富、などです',
+    text:'ドメインやブランドの力がある',
+    opts:{ yes:'指名検索が多く知名度・被リンクも豊富', ly:'ある程度の知名度・言及がある', ln:'知名度・被リンクは乏しい', no:'ほぼ無名で被リンクもほとんどない' },
     unknown:{kind:'データ分析', act:'まずGSCでブランド系クエリの量を見る。被リンクや企業の知名度もあわせて確かめる'} },
   { id:'a2', zone:'A',
-    text:'どのようなコンテンツがCVなどのビジネス成果に直接貢献するか、は明確ですか？',
-    hint:'CVに近いニーズが定まっているかということです',
+    text:'どんなコンテンツがCVなどの成果に直結するかが明確だ',
+    opts:{ yes:'CVに近いニーズ・勝ち筋が定まっている', ly:'だいたい見えているが確信はない', ln:'仮説はあるが曖昧', no:'どれが成果につながるか分からない' },
     show:a=>NO_SIDE(a.a1)||a.a1==='unknown',
     unknown:{kind:'ヒアリング', act:'事業の優先順位を聞く：「いちばん問い合わせを増やしたい商品・サービスはどれですか？」'} },
   { id:'a3', zone:'A',
-    text:'制作を外部業者などにまるごと任せたい意向ですか？',
-    hint:'外注に回せる予算があるかということです',
+    text:'制作は外部にまるごと任せたい意向がある（任せる予算がある）',
+    opts:{ yes:'まるごと外注したい／予算もある', ly:'できれば任せたい', ln:'一部だけ任せたい', no:'社内でやりたい（外注予算は限られる）' },
     unknown:{kind:'ヒアリング', act:'予算感と任せ方の意向を聞く：「制作はどこまで社内でやりたいですか？外部に任せたい範囲はどこですか？」'} },
   { id:'a4', zone:'A',
-    text:'金融や医療や法律など高難度の領域ですか？',
-    hint:'いわゆるYMYL領域かということです',
+    text:'金融・医療・法律など高難度（YMYL）の領域だ',
+    opts:{ yes:'明確にYMYL領域だ', ly:'一部にYMYL的な要素がある', ln:'規制はほぼ気にしなくてよい', no:'YMYLではない' },
     show:a=>YES_SIDE(a.a3),
     unknown:{kind:'サイト確認', act:'扱う領域の規制や監修の要否を確認する'} },
   { id:'a5', zone:'A',
-    text:'原稿の叩き台さえあれば社内で仕上げて公開できる体制がありますか？',
-    hint:'原稿の叩き台を渡したときに、仕上げて公開までできる体制が社内にあるかということです',
+    text:'原稿の叩き台さえあれば社内で仕上げて公開できる体制がある',
+    opts:{ yes:'叩き台があれば仕上げ〜公開までできる', ly:'多少手を入れれば公開できる', ln:'仕上げ体制は心もとない', no:'仕上げ・公開できる人がいない' },
     show:a=>NO_SIDE(a.a3)||a.a3==='unknown',
     unknown:{kind:'ヒアリング', act:'社内の編集・公開体制を聞く：「原稿の叩き台があれば、仕上げて公開までできる方はいますか？」'} },
 
   /* --- Zone C --- */
   { id:'c1', zone:'C',
-    text:'今まで作ったコンテンツに見直すべき問題がありますか？',
-    hint:'例えば次のようなサインです\n・作ったまま更新されない記事が大量に放置されている\n・作っている割に成果が出ていない\n・増やしているのに流入が減っている\n・トピックから外れた記事が多い\n・細切れ記事やカニバリがある\n・情報が古いまま、または過去の量産で品質がバラバラ',
+    text:'これまで作ったコンテンツは良好な状態に保たれている',
+    opts:{ yes:'更新も行き届き、成果も安定している', ly:'おおむね良好だが気になる点もある', ln:'放置・低成果の記事がそこそこある', no:'更新停止・低品質・カニバリなどの問題が多い' },
     unknown:{kind:'データ分析',
       act:'まずGSCとGA4で「更新が止まった記事の流入」「成果につながっていない記事の割合」を見る',
       plan:'手元のデータで判断がつかない場合や、分析をプランに含めていない案件なら、全体パフォーマンス分析（初期）の提案の入口になる'} },
   { id:'c2', zone:'C',
-    text:'どこに問題があるか見当はついていますか？',
-    show:a=>YES_SIDE(a.c1)||a.c1==='unknown',
+    text:'どこに問題があるか見当はついている',
+    opts:{ yes:'どの記事・どの原因かだいたい分かっている', ly:'なんとなく見当はついている', ln:'曖昧で確信がない', no:'どこが悪いのか分からない' },
+    show:a=>NO_SIDE(a.c1)||a.c1==='unknown',
     unknown:{kind:'データ分析',
       act:'まず手元のGSCとGA4で当たりをつける',
       plan:'それでも掴めなければ、全体パフォーマンス分析から入る提案が正解になる'} },
   { id:'c3', zone:'C',
-    text:'検索結果で競合にポジションを取られてしまっている感覚はありますか？',
-    hint:'負けている感覚があるかということです',
-    show:a=>(YES_SIDE(a.c1)||a.c1==='unknown') && YES_SIDE(a.c2),
+    text:'検索結果で競合に対し優位なポジションを取れている',
+    opts:{ yes:'主要KWで上位を維持できている', ly:'取れている領域と負けている領域がある', ln:'競合に押され気味だ', no:'主要KWで競合に明確に負けている' },
+    show:a=>(NO_SIDE(a.c1)||a.c1==='unknown') && YES_SIDE(a.c2),
     unknown:{kind:'データ分析',
       act:'まず主要キーワードで実際に検索して、上位の顔ぶれと自社の位置を見る（手作業ですぐできる）',
       plan:'体系的に確かめるなら、競合ギャップ分析の提案につなげる'} },
 
   /* --- Zone B --- */
   { id:'b1', zone:'B',
-    text:'自社だけが持つ情報や自社で集めた独自データを使った記事がたくさん用意されていますか？',
-    hint:'例えば、独自調査、取材、実績データの公開などです',
+    text:'自社だけが持つ情報や独自データを使った記事がたくさんある',
+    opts:{ yes:'独自調査・取材・実績データの記事が豊富', ly:'いくつかはある', ln:'ほとんどない', no:'まったくない' },
     unknown:{kind:'サイト確認', act:'既存記事を読んで棚卸しし、独自データ・取材・事例の本数を数える'} },
   { id:'b2', zone:'B',
-    text:'満足度の高い顧客の声や、社内の専門家の知見などをコンテンツ化していますか？',
+    text:'満足度の高い顧客の声や社内専門家の知見など、記事にできる素材がある',
+    opts:{ yes:'顧客の声・専門家の知見がすぐ使える', ly:'探せば素材はありそう', ln:'素材は乏しい', no:'そうした素材がない' },
     show:a=>NO_SIDE(a.b1)||a.b1==='unknown',
     unknown:{kind:'ヒアリング', act:'「お客様の声や、社内で語れる専門家の方はいらっしゃいますか？」'} },
   { id:'b3', zone:'B',
-    text:'申込みフォーム以外にも、資料請求やダウンロードのようなハードルの低い入り口がありますか？',
+    text:'申込みフォーム以外に、資料請求やダウンロードなどハードルの低い入り口がある',
+    opts:{ yes:'資料DL等の中間CVが複数ある', ly:'一応いくつかある', ln:'ほとんどない', no:'申込みフォームしかない' },
     unknown:{kind:'サイト確認', act:'主要記事からのCV導線やダウンロード資料の有無をサイトで確かめる'} },
   { id:'b4', zone:'B',
-    text:'サービスページやLPが薄い・古い・作りっぱなしになっていますか？',
+    text:'サービスページやLPは充実し、最新の状態に保たれている',
+    opts:{ yes:'内容も厚く定期的に更新されている', ly:'おおむね整っている', ln:'薄い・古い箇所が目立つ', no:'薄い・古い・作りっぱなしだ' },
     show:a=>NO_SIDE(a.b3)||a.b3==='unknown',
     unknown:{kind:'サイト確認', act:'サービスページ・LPの更新日・厚み・訴求を見る'} },
   { id:'b5', zone:'B',
-    text:'獲得したリードは受注や有効な商談につながっていますか？',
-    hint:'展示会やウェビナー後の追いかけができているかということです',
+    text:'獲得したリードは受注や有効な商談につながっている',
+    opts:{ yes:'リードが商談・受注に順調につながる', ly:'一部はつながっている', ln:'あまりつながっていない', no:'取ったきりで追えていない' },
     unknown:{kind:'ヒアリング', act:'「展示会やウェビナーで取ったリードは、その後どうなっていますか？」'} },
   { id:'b6', zone:'B',
-    text:'セミナーやウェビナー、イベントなどの活動が記事化されていますか？',
-    hint:'開催していない場合は「YES」を選んでください',
+    text:'セミナーやウェビナー、イベントの活動が記事化されている',
+    hint:'開催していない場合は「あてはまる」を選んでください',
+    opts:{ yes:'毎回きちんと記事化している（または開催していない）', ly:'たまに記事化している', ln:'ほとんど記事化していない', no:'開催しているのに全く記事化していない' },
     unknown:{kind:'ヒアリング', act:'「セミナーやウェビナーは定期開催していますか？終わった後、記事などにしていますか？」'} },
   { id:'b7', zone:'B',
-    text:'文章の説明だけでは理解してもらいにくい商品やサービスですか？？',
-    hint:'図やイラストや動画があった方が伝わりやすい商品やサービスかということです',
+    text:'文章の説明だけで十分に伝わる商品・サービスだ',
+    opts:{ yes:'文章だけで問題なく伝わる', ly:'だいたいは文章で伝わる', ln:'図や動画があった方が伝わりやすい', no:'文章だけでは理解されにくい' },
     unknown:{kind:'ヒアリング', act:'「届けたい相手はどんな方ですか？長い文章は読まれる層ですか？」'} },
   { id:'b8', zone:'B',
-    text:'業界特有の専門用語が多用されているのに、非専門家向けに解説する記事が十分ではないですか？',
-    hint:'専門用語が多く使われる業界なのに、その意味を説明する記事が手薄な状態です',
+    text:'専門用語が多い業界だが、非専門家向けに解説する記事が十分にある',
+    opts:{ yes:'用語解説コンテンツが十分に揃っている', ly:'ある程度はある', ln:'手薄だ', no:'ほとんどない（用語が説明されていない）' },
     unknown:{kind:'サイト確認', act:'用語まわりのコンテンツの有無と、検索結果での競合・AIの回答のされ方を見る'} },
 
   /* --- Zone D --- */
   { id:'d1', zone:'D',
-    text:'内製でコンテンツマーケティングとしての成果は出ていますか？',
+    text:'内製でコンテンツマーケティングとしての成果が出ている',
+    opts:{ yes:'内製で手応え・成果が出ている', ly:'そこそこ成果は出ている', ln:'成果は乏しい', no:'成果が出ていない' },
     unknown:{kind:'ヒアリング', act:'「内製でやってみて、成果は上がっていますか？手応えはどうですか？」'} },
   { id:'d2', zone:'D',
-    text:'調査記事やインタビュー記事やホワイトペーパーが不足していますか？',
+    text:'調査記事・インタビュー記事・ホワイトペーパーが揃っている',
     hint:'内製のチームだけでは作りにくいコンテンツの種類です',
+    opts:{ yes:'調査・取材・WPまで一通り揃っている', ly:'一部はある', ln:'足りていない', no:'ほとんどない' },
     show:a=>YES_SIDE(a.d1)||a.d1==='unknown',
     unknown:{kind:'サイト確認', act:'調査記事・インタビュー・ホワイトペーパーの有無をサイトで数える'} },
   { id:'d3', zone:'D',
-    text:'記事の品質や誤情報や表現のルールについて困りごとがありますか？',
-    hint:'品質が上げられない、誤情報が怖い、トンマナや業法対応が揃わない、などです',
+    text:'記事の品質・ファクト・表現ルールは安心できる状態に整っている',
+    opts:{ yes:'品質もルールも整っていて不安がない', ly:'おおむね問題ない', ln:'品質やルールに不安がある', no:'品質・誤情報・トンマナに強い不安がある' },
     show:a=>NO_SIDE(a.d1)||a.d1==='unknown',
     unknown:{kind:'ヒアリング', act:'「品質やファクトチェックで不安はありませんか？表現のルールはありますか？」'} },
   { id:'d4', zone:'D',
-    text:'何を書けばいいか決められないという困りごとがありますか？',
-    hint:'構成が作れない、ネタが枯れた、なども含みます',
+    text:'何を書くか（構成・ネタ）は問題なく決められている',
+    opts:{ yes:'テーマも構成もスムーズに決まる', ly:'だいたい決められている', ln:'ネタ切れ・構成づくりに苦労する', no:'何を書けばいいか決められない' },
     show:a=>NO_SIDE(a.d1)||a.d1==='unknown',
     unknown:{kind:'ヒアリング', act:'「どの工程にいちばん時間がかかっていますか？ネタ切れは起きていませんか？」'} },
   { id:'d5', zone:'D',
-    text:'進行が回らないという困りごとがありますか？',
-    hint:'担当者が一人で抱えて疲弊している状態を含みます',
+    text:'制作の進行は無理なく回っている',
+    opts:{ yes:'進行は安定して回っている', ly:'なんとか回っている', ln:'回しきれず滞りがある', no:'進行が回らず担当者が疲弊している' },
     show:a=>NO_SIDE(a.d1)||a.d1==='unknown',
     unknown:{kind:'ヒアリング', act:'「担当の方おひとりで回していますか？負担になっていませんか？」'} },
   { id:'d6', zone:'D',
-    text:'書き手が育たないという困りごとがありますか？',
-    hint:'社内にノウハウが貯まらない状態を含みます',
+    text:'社内で書き手が育ち、ノウハウが貯まっている',
+    opts:{ yes:'書ける人が増えノウハウも蓄積している', ly:'少しずつ育っている', ln:'なかなか育たない', no:'書き手が育たずノウハウも貯まらない' },
     show:a=>NO_SIDE(a.d1)||a.d1==='unknown',
     unknown:{kind:'ヒアリング', act:'「社内で書ける方は増えていますか？ノウハウは貯まっていますか？」'} },
 
   /* --- Z --- */
   { id:'z', zone:'Z',
-    text:'こちらから提案した施策が実行に移されずに溜まっていませんか？',
-    hint:'例えば次のような言葉が出ている状態です。「手が回らない」「全部は社内では厳しい」「宿題が消化できない」',
+    text:'こちらから提案した施策は、きちんと実行に移されている',
+    hint:'「手が回らない」「全部は社内では厳しい」「宿題が消化できない」という言葉が出ていれば、実行に移せていないサインです',
+    opts:{ yes:'提案はほぼ実行に移されている', ly:'おおむね実行されている', ln:'実行が追いつかず溜まりがちだ', no:'提案が実行されずどんどん溜まっている' },
     unknown:{kind:'観察', act:'定例のたびに宿題や提案の消化状況を見ておく'} },
 ];
 
@@ -476,11 +485,11 @@ function zoneAct(){
     else if(q3==='yes'){ z.B=Math.max(z.B,branch); }
     else if(q3==='unknown'){ z.C=Math.max(z.C,Math.min(branch,0.7)); }
   }
-  /* C→B：症状がない → 受け皿・導線を疑う */
-  if(z.C>0 && NO_SIDE(ans.c1)) z.B=Math.max(z.B, Math.min(z.C, ans.c1==='no'?1:0.7));
-  /* D→B：内製で成果あり＆空きあり → 上乗せ */
-  if(z.D>0 && YES_SIDE(ans.d1) && YES_SIDE(ans.d2))
-    z.B=Math.max(z.B, Math.min(z.D, CY(ans.d1), CY(ans.d2))||0);
+  /* C→B：症状がない（コンテンツは良好） → 受け皿・導線を疑う */
+  if(z.C>0 && YES_SIDE(ans.c1)) z.B=Math.max(z.B, Math.min(z.C, ans.c1==='yes'?1:0.7));
+  /* D→B：内製で成果あり＆調査/取材/WPが揃っていない → 上乗せ */
+  if(z.D>0 && YES_SIDE(ans.d1) && NO_SIDE(ans.d2))
+    z.B=Math.max(z.B, Math.min(z.D, CY(ans.d1), CN(ans.d2))||0);
 
   return z;
 }
@@ -530,10 +539,10 @@ function computeResults(){
 
   /* --- Zone C --- */
   if(z.C>0){
-    addP(z.C,[CY(on('c1'))],'パフォーマンス改善','パフォーマンス改善パッケージ（初期＋月額）','バラ売りせず初期と月額をバランスよく組んで提案する。月額はリライト・統合・CTA/内部リンク改善・記事トラッキング。');
-    addP(z.C,[CY(on('c1')),CN(on('c2'))],'パフォーマンス改善｜初期','全体パフォーマンス分析（ポートフォリオ整理込み）','まず全記事を棚卸しして直す・まとめる・減らす・伸ばすに仕分ける。');
-    addP(z.C,[CY(on('c1')),CY(on('c2')),CY(on('c3'))],'パフォーマンス改善｜初期','競合ギャップ分析＋削除/統合/リライト対応整理','競合との重ね合わせでどこが空いているか・取られているかを見る。');
-    addP(z.C,[CY(on('c1')),CY(on('c2')),CN(on('c3'))],'パフォーマンス改善｜初期','削除/統合/リライト対応整理から','見当がついている問題を対応整理に落とし月額で一記事ずつ手を入れていく。');
+    addP(z.C,[CN(on('c1'))],'パフォーマンス改善','パフォーマンス改善パッケージ（初期＋月額）','バラ売りせず初期と月額をバランスよく組んで提案する。月額はリライト・統合・CTA/内部リンク改善・記事トラッキング。');
+    addP(z.C,[CN(on('c1')),CN(on('c2'))],'パフォーマンス改善｜初期','全体パフォーマンス分析（ポートフォリオ整理込み）','まず全記事を棚卸しして直す・まとめる・減らす・伸ばすに仕分ける。');
+    addP(z.C,[CN(on('c1')),CY(on('c2')),CN(on('c3'))],'パフォーマンス改善｜初期','競合ギャップ分析＋削除/統合/リライト対応整理','競合との重ね合わせでどこが空いているか・取られているかを見る。');
+    addP(z.C,[CN(on('c1')),CY(on('c2')),CY(on('c3'))],'パフォーマンス改善｜初期','削除/統合/リライト対応整理から','見当がついている問題を対応整理に落とし月額で一記事ずつ手を入れていく。');
   }
 
   /* --- Zone B --- */
@@ -541,12 +550,12 @@ function computeResults(){
   if(z.B>0){
     if(addP(z.B,[CN(on('b1')),CY(on('b2'))],'専門編集型','インタビュー記事・導入事例','その声と知見をコンテンツに。第三者の声は自社の主張より強くAIにも競合にも代替されない。')) bProposed=true;
     if(addP(z.B,[CN(on('b1')),CN(on('b2'))],'専門編集型','アンケート調査記事','一次データを自ら作って引用される側に回る。')) bProposed=true;
-    if(addP(z.B,[CN(on('b3')),CY(on('b4'))],'専門編集型','サービスページ改修・LP改修','せっかくの流入を受け止める器から直す。')) bProposed=true;
-    if(addP(z.B,[CN(on('b3')),CN(on('b4'))],'専門編集型','ホワイトペーパー＋ダウンロード導線','問い合わせの手前に中間CVの受け皿を作る。')) bProposed=true;
+    if(addP(z.B,[CN(on('b3')),CN(on('b4'))],'専門編集型','サービスページ改修・LP改修','せっかくの流入を受け止める器から直す。')) bProposed=true;
+    if(addP(z.B,[CN(on('b3')),CY(on('b4'))],'専門編集型','ホワイトペーパー＋ダウンロード導線','問い合わせの手前に中間CVの受け皿を作る。')) bProposed=true;
     if(addP(z.B,[CN(on('b5'))],'専門編集型','ホワイトペーパー＋メルマガ等のナーチャリング素材','リードを温めて商談化までつなげる素材を用意する。（補足）メルマガの商材上の扱いは要確認。')) bProposed=true;
     if(addP(z.B,[CN(on('b6'))],'専門編集型','セミナー・イベントレポート記事','開催のたびにコンテンツが1本生まれる形にする。')) bProposed=true;
-    if(addP(z.B,[CY(on('b7'))],'専門編集型','漫画・動画','形式を変えて読む負担を下げて届ける。SNSや営業現場でも使い回せる。')) bProposed=true;
-    if(addP(z.B,[CY(on('b8'))],'専門編集型','用語集','トピックの軸を低コストで補強。（注意）1用語1記事の量産はAIの回答に代替されやすく慎重な判断が必要。')) bProposed=true;
+    if(addP(z.B,[CN(on('b7'))],'専門編集型','漫画・動画','形式を変えて読む負担を下げて届ける。SNSや営業現場でも使い回せる。')) bProposed=true;
+    if(addP(z.B,[CN(on('b8'))],'専門編集型','用語集','トピックの軸を低コストで補強。（注意）1用語1記事の量産はAIの回答に代替されやすく慎重な判断が必要。')) bProposed=true;
     const bIds=['b1','b2','b3','b4','b5','b6','b7','b8'];
     const bVisible=bIds.filter(id=>visIds.has(id));
     const bDone=bVisible.length>0 && bVisible.every(id=>ans[id]!==null);
@@ -558,29 +567,29 @@ function computeResults(){
 
   /* --- Zone D --- */
   if(z.D>0){
-    if(YES_SIDE(on('d1')) && NO_SIDE(on('d2')))
+    if(YES_SIDE(on('d1')) && YES_SIDE(on('d2')))
       W.push({t:'観察を継続', b:'うまくいっている内製にいま割り込む必要はない。定例で困りごとが出てきたら拾う。'});
     let dProposed=false;
-    if(addP(z.D,[CY(on('d3'))],'内製支援','AI生成原稿チェック／記事制作ガイドライン作成（＋監修者アサイン）','公開前に編集のプロの目を入れる工程と守るべきルールの明文化から。')) dProposed=true;
-    if(addP(z.D,[CY(on('d4'))],'内製支援','要件作成（構成案）・キーワード調査','上流工程だけ当社が担い執筆は内製のまま残す形にできる。')) dProposed=true;
-    if(addP(z.D,[CY(on('d5'))],'内製支援','進行管理／ディレクション・会議参加','回る体制づくりを外に出して担当者は意思決定に集中してもらう。')) dProposed=true;
-    if(addP(z.D,[CY(on('d6'))],'内製支援','セミナー（内製化支援）','ノウハウを社内の資産として残す形で支援する。')) dProposed=true;
+    if(addP(z.D,[CN(on('d3'))],'内製支援','AI生成原稿チェック／記事制作ガイドライン作成（＋監修者アサイン）','公開前に編集のプロの目を入れる工程と守るべきルールの明文化から。')) dProposed=true;
+    if(addP(z.D,[CN(on('d4'))],'内製支援','要件作成（構成案）・キーワード調査','上流工程だけ当社が担い執筆は内製のまま残す形にできる。')) dProposed=true;
+    if(addP(z.D,[CN(on('d5'))],'内製支援','進行管理／ディレクション・会議参加','回る体制づくりを外に出して担当者は意思決定に集中してもらう。')) dProposed=true;
+    if(addP(z.D,[CN(on('d6'))],'内製支援','セミナー（内製化支援）','ノウハウを社内の資産として残す形で支援する。')) dProposed=true;
     if(dProposed){
-      const anyFirm=['d3','d4','d5','d6'].some(id=>on(id)==='yes') && z.D>=0.99;
+      const anyFirm=['d3','d4','d5','d6'].some(id=>on(id)==='no') && z.D>=0.99;
       const item={tag:'内製支援｜組み合わせ', t:'＋ナイルコンテンツスタジオ（初期設定・ガイドライン設計込み）', b:'自社のルール・業法・トンマナを織り込んだAI制作ツール。どの困りごとにも組み合わせて提案できる。'};
       (anyFirm?SURE:MAYBE).push(item);
     }
     const dIds=['d3','d4','d5','d6'];
     const dVisible=dIds.filter(id=>visIds.has(id));
-    if(NO_SIDE(on('d1')) && dVisible.length>0 && dVisible.every(id=>NO_SIDE(ans[id]))){
+    if(NO_SIDE(on('d1')) && dVisible.length>0 && dVisible.every(id=>YES_SIDE(ans[id]))){
       W.push({t:'ヒアリング継続', b:'困りごとはこれから出てくる。定例の会話の中で拾い続ける。'});
     }
   }
 
   /* --- Z --- */
-  if(on('z')==='yes')
+  if(on('z')==='no')
     I.push({tag:'常駐支援', t:'常駐・中の人プラン', b:'実行部隊ごと中に入る提案。溜まった提案がそのまま成果に変わる（N万円＝目安N時間。全メニュー＋コンテンツスタジオを組み合わせて中で回す）。'});
-  else if(on('z')==='ly')
+  else if(on('z')==='ln')
     I.push({tag:'常駐支援｜兆しあり', t:'常駐・中の人プラン（様子を見て差し込む）', b:'実行の詰まりの兆しあり。「私がお手伝いしますよ」の一言から様子を見て詰まりがはっきりしたら実行部隊ごと中に入る提案へ。'});
 
   /* --- わからない → ヒアリング / 分析・確認 --- */
@@ -616,6 +625,12 @@ function renderQuiz(){
   $('zone-note').textContent=note||'';
   $('q-text').textContent=q.text;
   $('q-hint').textContent=q.hint||'';
+  const DEG={yes:'あてはまる',ly:'ややあてはまる',ln:'あまりあてはまらない',no:'あてはまらない'};
+  ['yes','ly','ln','no'].forEach(k=>{
+    const o=q.opts&&q.opts[k];
+    $('btn-'+k).innerHTML='<span class="deg">'+DEG[k]+'</span>'+(o?'<span class="opt">'+o+'</span>':'');
+  });
+  $('btn-unk').innerHTML='<span class="deg">わからない</span><span class="opt">→ 確認・ヒアリングすべきことに変換されます</span>';
   $('btn-back').style.visibility = history.length ? 'visible' : 'hidden';
 }
 
