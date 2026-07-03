@@ -204,6 +204,7 @@
       <button type="button" id="btn-ln"></button>
       <button type="button" id="btn-no"></button>
       <div class="divider"></div>
+      <button type="button" id="btn-na"></button>
       <button type="button" id="btn-unk"></button>
     </div>
     <div class="quiz-foot">
@@ -630,6 +631,7 @@ function renderQuiz(){
     const o=q.opts&&q.opts[k];
     $('btn-'+k).innerHTML='<span class="deg">'+DEG[k]+'</span>'+(o?'<span class="opt">'+o+'</span>':'');
   });
+  $('btn-na').innerHTML='<span class="deg">該当しない</span><span class="opt">→ この設問は自社に当てはまらない（採点しない）</span>';
   $('btn-unk').innerHTML='<span class="deg">わからない</span><span class="opt">→ 確認・ヒアリングすべきことに変換されます</span>';
   $('btn-back').style.visibility = history.length ? 'visible' : 'hidden';
 }
@@ -696,6 +698,7 @@ $('btn-yes').addEventListener('click',()=>answer('yes'));
 $('btn-ly').addEventListener('click',()=>answer('ly'));
 $('btn-ln').addEventListener('click',()=>answer('ln'));
 $('btn-no').addEventListener('click',()=>answer('no'));
+$('btn-na').addEventListener('click',()=>answer('na'));
 $('btn-unk').addEventListener('click',()=>answer('unknown'));
 $('btn-back').addEventListener('click',goBack);
 $('btn-restart').addEventListener('click',restart);
